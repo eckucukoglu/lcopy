@@ -98,8 +98,27 @@ int copy_chunk () {
  * Copies source file to destination target.
  * Should be called if destination target does not exists.
  */
-int copy_file_raw () {
+int copy_file_raw (char *from, char *to) {
+        FILE *src, *dest;
+        char c;
+        
+        src = fopen(from, "r");
+        if (src == NULL)
+                handle_error("fopen");
 
+        dest = fopen(to, "w");
+        if (dest == NULL) {
+                fclose(src);
+                handle_error("fopen");
+        }
+
+        while ((c = fgetc(src)) != EOF)
+                fputc(c, dest);
+
+        fclose(src);
+        fclose(dest);
+
+        return 0;
 }
 
 /*
@@ -121,7 +140,7 @@ int lcopy_file (char *src, char *dest, int rflag) {
         }
         
         /* Do some copy work... */
-        
+        // copy_file_raw(src, dest);
         
         return 0;
 }
@@ -143,7 +162,7 @@ void usage () {
 int main (int argc, char *argv[]) {
         int ch;
         int rflag = 0; /* Recursively copy flag. */
-        int number_of_sources; /* Number of source targets. */
+        int number_of_sources; /* Number of sources. */
         int i, j;
         int rc;
         char **sources;
@@ -198,7 +217,7 @@ int main (int argc, char *argv[]) {
         printf("Recursively copy: %s\n", rflag ? "On" : "Off");
         printf("Number of sources: %d\n", number_of_sources);
         for (i = 0; i < number_of_sources; i++) {
-                printf("Source target: %s\n", sources[i]);
+                printf("Source: %s\n", sources[i]);
         }
         fflush(stdout);
 #endif /* DEBUG */
@@ -213,7 +232,7 @@ int main (int argc, char *argv[]) {
                 exit(EXIT_FAILURE);
         }
         
-        /* Do lazy copy for each source target. */
+        /* Do lazy copy for each sources. */
         for (i = 0; i < number_of_sources; i++) {
                 rc = lcopy_file(sources[i], dest, rflag);
                 if (!rc)
