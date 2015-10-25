@@ -50,11 +50,10 @@ int main(int argc, char *argv[]) {
 
                         n = fread(readbuffer, 1, 1024*128, fp);
                         ds = digmd5(readbuffer, digest, n);
-
+                        
                         for (j = 0; j < ds ; j++)
                                 printf("%02x", digest[j]);
                                 
-                        printf("\t%s\n", ds,argv[i]);
                         fclose(fp);
                 }
         }
