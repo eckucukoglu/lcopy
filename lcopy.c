@@ -89,8 +89,6 @@ double compare_mtime(const char *path1, const char *path2) {
         
         seconds = difftime(info1.st_mtime, info2.st_mtime);
         
-        printf("compare_mtime:%f\n", seconds);
-        
         return seconds;
 }
 
@@ -105,7 +103,6 @@ const char *get_extension(const char *path) {
 
 /* Returns basename from file path. */
 char* get_basename (const char *path) {
-        printf("get_basename:%s\n", path);
         char *basename;
         char *copy;
         int l = 0;
@@ -174,13 +171,6 @@ int write_digest_file (FILE *src, FILE *digsfile) {
                 
                 md5_length = digmd5(readbuffer, digest, fread_src_length);
                 
-                printf("writing digest:%02x\n", digest);
-                
-                /*fwrite_dest_length = fwrite(digest, 1, md5_length, digsfile);
-                if (fwrite_dest_length < md5_length)
-                        return -1;
-                */
-                
                 fprintf(digsfile, "%02x\n", digest);
         }
         
@@ -219,9 +209,6 @@ int copy_file_raw (FILE *src, FILE *dest) {
  * Returns 0 on success, 
  */
 int lcopy (char *src, char *dest, int rflag) {
-        printf("lcopy src: %s and dest: %s, rflag: %d\n",
-                src, dest, rflag);
-        
         /* Source does not exist. */
         if (!is_file_exist(src)) {
                 exception = SRCNOTEXIST;
@@ -230,8 +217,6 @@ int lcopy (char *src, char *dest, int rflag) {
 
         /* Source is a directory. */
         if (is_directory(src)) {
-                printf("src: %s is a directory\n", src);
-                
                 /* Directory sources will be omitted 
                         unless recursive copy set. */
                 if (!rflag) {
@@ -248,8 +233,6 @@ int lcopy (char *src, char *dest, int rflag) {
                         
                         /* Destination is an existent directory. */
                         if (is_directory(dest)) {
-                                printf("dest:%s is a directory, too.\n", dest);
-                                
                                 char *src_basename = get_basename(src);
                                 char *dest_basename = get_basename(dest);
                                 char *new_dest_dir = malloc(500);
@@ -262,11 +245,8 @@ int lcopy (char *src, char *dest, int rflag) {
                                         strcpy(new_dest_dir, dest);
                                 }
                                 
-                                printf("Checking %s exist?\n", new_dest_dir);
-                                
                                 /* If not exist mkdir new destination directory. */
                                 if (!is_directory(new_dest_dir)) {
-                                        printf("not exist, mkdir it.\n");
                                         if (mkdir(new_dest_dir,0777) == -1) {
                                                 handle_error("mkdir");
                                         }
@@ -299,9 +279,6 @@ int lcopy (char *src, char *dest, int rflag) {
                                         if (!strcmp (entry->d_name, ".."))    
                                                 continue;
                                         
-                                        printf("Working with direntry %s\n", 
-                                                entry->d_name);
-                                        
                                         char *src_path, *dest_path;
                                         
                                         src_path = malloc(500);
@@ -314,9 +291,6 @@ int lcopy (char *src, char *dest, int rflag) {
                                         strcpy(dest_path, new_dest_dir);
                                         strcat(dest_path, "/");
                                         strcat(dest_path, entry->d_name);
-                                        
-                                        printf("Calling lcopy(%s,%s,%d)\n",
-                                                src_path, dest_path, rflag);
                                         
                                         int retcon = lcopy(src_path, 
                                                         dest_path, rflag);
@@ -332,7 +306,6 @@ int lcopy (char *src, char *dest, int rflag) {
                         } 
                         /* Destination is assumed not exist. */
                         else {
-                                printf("Destination is assumed not exist.D2\n");
                                 if (mkdir(dest,0777) == -1) {
                                         handle_error("mkdir");
                                 }
@@ -363,9 +336,6 @@ int lcopy (char *src, char *dest, int rflag) {
                                         if (!strcmp (entry->d_name, ".."))    
                                                 continue;
                                         
-                                        printf("D2 Working with direntry %s\n", 
-                                                entry->d_name);
-                                        
                                         char *src_path, *dest_path;
                                         
                                         src_path = malloc(500);
@@ -378,9 +348,6 @@ int lcopy (char *src, char *dest, int rflag) {
                                         strcpy(dest_path, dest);
                                         strcat(dest_path, "/");
                                         strcat(dest_path, entry->d_name);
-                                        
-                                        printf("D2 Calling lcopy(%s,%s,%d)\n",
-                                                src_path, dest_path, rflag);
                                         
                                         int retcon = lcopy(src_path, 
                                                         dest_path, rflag);
@@ -406,13 +373,8 @@ int lcopy (char *src, char *dest, int rflag) {
                         return -1;
                 }
                 
-                printf("some copy job from regular file:%s to %s\n",
-                        src, dest);
-                
                 /* Destination is not exist. */
                 if (!is_file_exist(dest)) {
-                        printf("R4,R8,R7(?)destination is not exist\n"
-                                "raw copy from: %s to:%s.\n", src, dest);
                         FILE *src_file = fopen(src, "r");
                         FILE *dest_file = fopen(dest, "w");
                         FILE *src_digs_file;
@@ -435,7 +397,6 @@ int lcopy (char *src, char *dest, int rflag) {
                                 if (src_digs_file == NULL)
                                         handle_error("fopen");
                                 
-                                printf("creating src:%s\n", src_digs_path);
                                 write_digest_file(src_file, src_digs_file);
                                 fclose(src_digs_file);
                         }
@@ -452,7 +413,6 @@ int lcopy (char *src, char *dest, int rflag) {
                         if (dest_file == NULL)
                                 handle_error("fopen");
                                 
-                        printf("creating destdigs:%s\n", dest_digs_path);
                         write_digest_file(dest_file, dest_digs_file);
                         fclose(dest_file);
                         fclose(dest_digs_file);
@@ -460,7 +420,6 @@ int lcopy (char *src, char *dest, int rflag) {
                 }
                 /* Destination exist and it is a directory. */
                 else if (is_directory(dest)) {
-                        printf("R6 Destination exist and it is a directory\n");
                         char *new_dest = malloc(500);
                         char *src_basename = get_basename(src);
                         
@@ -481,7 +440,6 @@ int lcopy (char *src, char *dest, int rflag) {
                 }
                 /* Destination exist and it is a regular file. */
                 else if (is_regularfile(dest)) {
-                        printf("R3 Destination exist and it is a regular file.\n");
                         /* Check that source digest file exist. */
                         char *src_digs_path = get_digs_filepath(src);
                         char *dest_digs_path = get_digs_filepath(dest);
@@ -510,7 +468,6 @@ int lcopy (char *src, char *dest, int rflag) {
                                 if (src_digs_f == NULL)
                                         handle_error("fopen3");
                                 
-                                printf("creating src:%s\n", src_digs_path);
                                 write_digest_file(src_f, src_digs_f);
                         }
                         if (!is_file_exist(dest_digs_path) || 
@@ -519,7 +476,6 @@ int lcopy (char *src, char *dest, int rflag) {
                                 if (dest_digs_f == NULL)
                                         handle_error("fopen4");
                                 
-                                printf("creating dest:%s\n", dest_digs_path);
                                 write_digest_file(dest_f, dest_digs_f);
                         }
                         
@@ -556,35 +512,20 @@ int lcopy (char *src, char *dest, int rflag) {
                                         
                                 fgets(dest_buf, SIZE_OF_DIGEST, dest_digs_f);
                                 
-                                printf("srcdigs:%s\ndestdigs:%s\n", 
-                                        src_buf, dest_buf);
-                                        
                                 diff_flag = strcmp(src_buf, dest_buf);
-                                
-                                printf("diff_flag: %d\n", diff_flag);
                                 
                                 /* Copy chunk from source to destination. */
                                 if (diff_flag) {
-                                        printf("copying %s chunk %d to %s.\n",
-                                                src, chunk_index, dest);
-                                        
                                         int retval;
                                         unsigned char *chunk = malloc(SIZE_OF_CHUNK);
                                         memset(chunk, 0, sizeof(chunk));
                                         /* Copy chunk from source to buffer.*/
                                         retval = fseek(src_f, (chunk_index*SIZE_OF_CHUNK), SEEK_SET);
-                                        printf("retval1:%d\n", retval);
                                         rchunk_size = fread(chunk, 1, SIZE_OF_CHUNK, src_f);
-                                        
-                                        printf("rchunk_size:%d\n", rchunk_size);
                                         
                                         /* Write chunk to dest from buffer. */
                                         retval = fseek(dest_f, (chunk_index*SIZE_OF_CHUNK), SEEK_SET);
-                                        printf("retval2:%d\n", retval);
-                                        
                                         wchunk_size = fwrite(chunk, 1, rchunk_size, dest_f);
-                                        
-                                        printf("wchunk_size:%d\n", wchunk_size);
                                         
                                         if (wchunk_size < rchunk_size) {
                                                 /* if (ferror(fd2)) */
