@@ -26,6 +26,7 @@ typedef enum {
         SRCNOTEXIST, /* Source does not exists. */
         NONDIRDEST, /* Cannot overwrite non-directory destination
                 with directory source.*/
+        OMITDIGS, /* Omit regular source files with extension .digs. */
 } Exception;
 
 /* String representation of defined exceptions. */
@@ -33,7 +34,8 @@ const char* exception_str[] = {
         "Omitting source directory", 
         "Destination is not a directory",
         "Source does not exists",
-        "Cannot overwrite non-directory destination with directory source."
+        "Cannot overwrite non-directory destination with directory source.",
+        "Omitting source file with extension .digs"
 }; 
 
 /* Global program exception. */
@@ -73,7 +75,7 @@ int is_directory(const char *path) {
 }
 
 /* Compare modification time of given paths. */
-int compare_mtime (const char *path1, const char *path2) {
+int compare_mtime(const char *path1, const char *path2) {
         struct stat info1;
         struct stat info2;
         
@@ -84,6 +86,15 @@ int compare_mtime (const char *path1, const char *path2) {
                 handle_error("stat");
                
         return (info1.st_mtime - info2.st_mtime);
+}
+
+/* Returns extension of a file. */
+const char *get_extension(const char *path) {
+    const char *dot = strrchr(path, '.');
+    if (!dot || dot == path)
+        return "";
+    
+    return dot + 1;
 }
 
 /* Returns basename from file path. */
@@ -304,7 +315,15 @@ int lcopy (char *src, char *dest, int rflag) {
                                         printf("Calling lcopy(%s,%s,%d)\n",
                                                 src_path, dest_path, rflag);
                                         
-                                        lcopy(src_path, dest_path, rflag);
+                                        int retcon = lcopy(src_path, 
+                                                        dest_path, rflag);
+                                        if (!retcon)
+                                                printf("Copied from %s to %s.\n",
+                                                        src_path, dest_path);
+                                        else
+                                                printf("%s: src:%s dest:%s.\n", 
+                                                        exception_str[exception], 
+                                                        src_path, dest_path);
                                 }
                                 
                         } 
@@ -360,7 +379,15 @@ int lcopy (char *src, char *dest, int rflag) {
                                         printf("D2 Calling lcopy(%s,%s,%d)\n",
                                                 src_path, dest_path, rflag);
                                         
-                                        lcopy(src_path, dest_path, rflag);
+                                        int retcon = lcopy(src_path, 
+                                                        dest_path, rflag);
+                                        if (!retcon)
+                                                printf("Copied from %s to %s.\n",
+                                                        src_path, dest_path);
+                                        else
+                                                printf("%s: src:%s dest:%s.\n", 
+                                                        exception_str[exception], 
+                                                        src_path, dest_path);
                                 }
                                 
                                 
@@ -370,6 +397,12 @@ int lcopy (char *src, char *dest, int rflag) {
         } 
         /* Source is assumed as a regular file. */
         else {
+                /* Omit <>.digs files while copying. */
+                if (!strcmp(get_extension(src), "digs")) {
+                        exception = OMITDIGS;
+                        return -1;
+                }
+                
                 printf("some copy job from regular file:(%s) to %s\n",
                         src, dest);
                 
@@ -429,7 +462,16 @@ int lcopy (char *src, char *dest, int rflag) {
                         strcat(new_dest, "/");
                         strcat(new_dest, src_basename);
                         
-                        lcopy(src, new_dest, rflag);
+                        int retcon = lcopy(src, new_dest, rflag);
+                        
+                        if (!retcon)
+                                printf("Copied from %s to %s.\n",
+                                        src, new_dest);
+                        else
+                                printf("%s: src:%s dest:%s.\n", 
+                                        exception_str[exception], 
+                                        src, new_dest);
+                        
                 }
                 /* Destination exist and it is a regular file. */
                 else if (is_regularfile(dest)) {
@@ -629,16 +671,14 @@ int main (int argc, char *argv[]) {
                 if (!rc)
                         printf("Copied from %s to %s.\n", sources[i], dest);
                 else
-                        printf("%s: %s.\n", 
-                                exception_str[exception], sources[i]);
+                        printf("%s: src:%s dest:%s.\n", 
+                                exception_str[exception], sources[i], dest);
         }
         
         exit(EXIT_SUCCESS);
 }
 
 /*
-> How exactly are we required to handle the following type of cases.
->
 > We are trying to recursively copy a directory src into directory dest,
 > and src/asd is another directory. However there is a *file* named asd in
 > dest/.
@@ -650,12 +690,12 @@ it would be an error. You do not need to handle errors properly.
 no such cases will be tested anyway.
 */
 
-/*
-> In addition, if I try to copy previously copied directory with '-r'
-> option, there are already created .digs files. For the second copy, I
-> call 'readdir' and it returns all files and directories. How should I
-> handle previously created '.digs' files? Should I assume that these are
-> also individual files to copied? If not, how can I distinguish
-> previously created '.digs' files?
-Good point. Assume no *.digs files are copied on target.
-*/
+// if exists do not create .digs file
+
+// check return conditions for all functions especially for lcopy
+
+// check always returns integer lcopy
+
+// free all pointers
+
+// fclose opendirs.
