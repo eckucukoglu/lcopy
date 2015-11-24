@@ -34,7 +34,7 @@ char readbuffer[128*1024]; /* at most 128 MBytes */
 int main(int argc, char *argv[]) {
         OpenSSL_add_all_digests();
         int i, j, n, ds;
-        unsigned char digest[128];
+        unsigned char digest[16];
 
         if (argc > 1) {
                 printf("only first %d bytes are read for digest!!\n",
@@ -54,6 +54,8 @@ int main(int argc, char *argv[]) {
                         for (j = 0; j < ds ; j++)
                                 printf("%02x", digest[j]);
                                 
+                        printf("\nbuf:%d, digest:%d\n", n, ds);
+                        
                         fclose(fp);
                 }
         }
